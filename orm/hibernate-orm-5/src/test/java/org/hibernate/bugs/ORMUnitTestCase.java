@@ -15,6 +15,8 @@
  */
 package org.hibernate.bugs;
 
+import java.util.List;
+import javax.persistence.TypedQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
@@ -37,6 +39,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
+                    UserEntity.class,
+                    FederatedIdentityEntity.class
 //				Foo.class,
 //				Bar.class
 		};
@@ -73,6 +77,30 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		Session s = openSession();
 		Transaction tx = s.beginTransaction();
 		// Do stuff...
+
+                UserEntity userEntity = new UserEntity();
+                userEntity.setId("1");
+                userEntity.setUsername("user1");
+
+                FederatedIdentityEntity identityEntity = new FederatedIdentityEntity();
+                identityEntity.setIdentityProvider("idp");
+                identityEntity.setUser(userEntity);
+                identityEntity.setUserId(userEntity.getId());
+                identityEntity.setUserName(userEntity.getUsername());
+
+                s.persist(userEntity);
+                s.persist(identityEntity);
+
+                tx.commit();
+                tx.begin();
+
+                TypedQuery<FederatedIdentityEntity> query = s.createNamedQuery("findFederatedIdentityByUserAndProvider", FederatedIdentityEntity.class);
+                query.setParameter("user", userEntity);
+                query.setParameter("identityProvider", "idp");
+
+                // following line passes without issues
+                List<FederatedIdentityEntity> result = query.getResultList();
+
 		tx.commit();
 		s.close();
 	}

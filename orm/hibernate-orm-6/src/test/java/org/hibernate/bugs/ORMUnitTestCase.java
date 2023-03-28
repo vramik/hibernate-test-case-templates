@@ -15,6 +15,8 @@
  */
 package org.hibernate.bugs;
 
+import jakarta.persistence.TypedQuery;
+import java.util.List;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
@@ -37,6 +39,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
+                    UserEntity.class,
+                    FederatedIdentityEntity.class
 //				Foo.class,
 //				Bar.class
 		};
@@ -72,7 +76,32 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
 		Session s = openSession();
 		Transaction tx = s.beginTransaction();
-		// Do stuff...
+                // Do stuff...
+
+                UserEntity userEntity = new UserEntity();
+                userEntity.setId("1");
+                userEntity.setUsername("user1");
+
+                FederatedIdentityEntity identityEntity = new FederatedIdentityEntity();
+                identityEntity.setIdentityProvider("idp");
+                identityEntity.setUser(userEntity);
+                identityEntity.setUserId(userEntity.getId());
+                identityEntity.setUserName(userEntity.getUsername());
+
+                s.persist(userEntity);
+                s.persist(identityEntity);
+
+                tx.commit();
+                tx.begin();
+
+                TypedQuery<FederatedIdentityEntity> query = s.createNamedQuery("findFederatedIdentityByUserAndProvider", FederatedIdentityEntity.class);
+                query.setParameter("user", userEntity);
+                query.setParameter("identityProvider", "idp");
+
+                //this throws org.hibernate.HibernateException: identifier of an instance of org.hibernate.bugs.FederatedIdentityEntity was altered from FederatedIdentityEntity.Key 
+                // [user=null, identityProvider=idp] to FederatedIdentityEntity.Key [user=1, identityProvider=idp]
+                List<FederatedIdentityEntity> result = query.getResultList();
+
 		tx.commit();
 		s.close();
 	}
