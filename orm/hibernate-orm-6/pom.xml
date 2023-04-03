@@ -10,7 +10,7 @@
 	<properties>
 		<version.com.h2database>2.1.212</version.com.h2database>
 		<version.junit>4.13.2</version.junit>
-		<version.org.hibernate>6.1.0.Final</version.org.hibernate>
+		<version.org.hibernate>6.2.0.CR4</version.org.hibernate>
 		<version.org.slf4j>1.7.33</version.org.slf4j>
 	</properties>
 
@@ -25,6 +25,12 @@
 			<artifactId>hibernate-testing</artifactId>
 			<version>${version.org.hibernate}</version>
 		</dependency>
+
+                <dependency>
+                    <groupId>org.postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                    <version>42.6.0</version>
+                </dependency>
 
 		<dependency>
 			<groupId>com.h2database</groupId>
